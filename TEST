@@ -1,0 +1,81 @@
+local ESP = {}
+ESP.Enabled = true
+ESP.TeamCheck = false
+ESP.Boxes = true
+ESP.Names = true
+ESP.Tracers = true
+
+local function CreateESP(player)
+    local character = player.Character
+    if not character then return end
+    
+    local box = Instance.new("BoxHandleAdornment")
+    box.Size = Vector3.new(4, 5, 1)
+    box.Color3 = Color3.fromRGB(255, 0, 0)
+    box.Transparency = 0.5
+    box.AlwaysOnTop = true
+    box.Adornee = character:WaitForChild("HumanoidRootPart")
+    box.Parent = game.CoreGui
+
+    local name = Instance.new("BillboardGui")
+    name.Size = UDim2.new(0, 200, 0, 50)
+    name.StudsOffset = Vector3.new(0, 3, 0)
+    name.AlwaysOnTop = true
+
+    local nameLabel = Instance.new("TextLabel")
+    nameLabel.Size = UDim2.new(1, 0, 1, 0)
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.Text = player.Name
+    nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    nameLabel.TextStrokeTransparency = 0.5
+    nameLabel.Parent = name
+    name.Parent = game.CoreGui
+
+    local tracer = Instance.new("Frame")
+    tracer.Size = UDim2.new(0, 2, 0, 300)
+    tracer.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+    tracer.BorderSizePixel = 0
+    tracer.Position = UDim2.new(0.5, 0, 1, 0)
+    tracer.AnchorPoint = Vector2.new(0.5, 1)
+    tracer.Parent = game.CoreGui
+
+    -- Update ESP elements
+    game:GetService("RunService").RenderStepped:Connect(function()
+        if ESP.Enabled and character and character.Parent and character:FindFirstChild("HumanoidRootPart") then
+            local rootPartPos = character.HumanoidRootPart.Position
+            local screenPos, onScreen = workspace.CurrentCamera:WorldToViewportPoint(rootPartPos)
+            
+            if onScreen then
+                box.Visible = ESP.Boxes
+                box.CFrame = character.HumanoidRootPart.CFrame
+                name.Enabled = ESP.Names
+                name.Adornee = character.HumanoidRootPart
+                tracer.Visible = ESP.Tracers
+                tracer.Position = UDim2.new(0.5, 0, 1, 0)
+            else
+                box.Visible = false
+                name.Enabled = false
+                tracer.Visible = false
+            end
+        else
+            box.Visible = false
+            name.Enabled = false
+            tracer.Visible = false
+        end
+    end)
+end
+
+game.Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function()
+        if ESP.TeamCheck and player.Team == game.Players.LocalPlayer.Team then return end
+        CreateESP(player)
+    end)
+end)
+
+for _, player in pairs(game.Players:GetPlayers()) do
+    if player ~= game.Players.LocalPlayer then
+        CreateESP(player)
+    end
+end
+
+return ESP
